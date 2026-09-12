@@ -75,6 +75,7 @@ import {
   Settings,
   Wallet,
   Users,
+  Mail,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -412,6 +413,7 @@ function Index() {
   const seciliDers: Ders = "kuran";
 
   const [ayarlarAcik, setAyarlarAcik] = useState(false);
+  const [mailAcik, setMailAcik] = useState(false);
   const [aidatIndirAy, setAidatIndirAy] = useState<string>("buAy");
   const [parolaDegistirAcik, setParolaDegistirAcik] = useState(false);
   const [eskiParola, setEskiParola] = useState("");
@@ -1054,6 +1056,10 @@ function Index() {
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuLabel>Yönetim</DropdownMenuLabel>
+                    <DropdownMenuItem onSelect={() => setMailAcik(true)}>
+                      <Mail className="mr-2 h-4 w-4" />
+                      Aidat Hatırlatma E-postası
+                    </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => setAyarlarAcik(true)}>
                       <Settings className="mr-2 h-4 w-4" />
                       {tr("ayarlar")}
