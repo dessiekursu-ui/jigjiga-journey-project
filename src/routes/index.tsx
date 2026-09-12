@@ -1708,8 +1708,6 @@ function Index() {
             </button>
             {hocaModu && (
               <>
-                <AidatHatirlatma talebeler={talebeler} />
-
                 <label className="flex w-full cursor-pointer items-center gap-3 rounded-md border border-border/60 px-3 py-2 text-left transition-colors hover:bg-accent">
                   <FileDown className="h-4 w-4 rotate-180 text-muted-foreground" />
                   <span className="text-sm font-medium">Talebe Listesi Excel Yükle</span>
