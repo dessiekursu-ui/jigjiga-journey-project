@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Mail, Send, Check, UserPlus, Trash2 } from "lucide-react";
+import { Mail, Send, Check, UserPlus, Trash2, Menu, X } from "lucide-react";
 import {
   GRUPLAR,
   hocaMailAyarDinle,
@@ -41,14 +41,14 @@ const AY_ADLARI = [
 ];
 
 type Alici = {
-  anahtar: string; // gönderim takibi için benzersiz anahtar
+  anahtar: string;
   ad: string;
   grupEtiket: string;
   eposta: string;
   odeyen: number;
   toplam: number;
   odemeyenler: string[];
-  ekstraId?: string; // ekstra hoca ise silme için
+  ekstraId?: string;
 };
 
 export default function AidatHatirlatma({ talebeler }: { talebeler: Talebe[] }) {
@@ -64,6 +64,7 @@ export default function AidatHatirlatma({ talebeler }: { talebeler: Talebe[] }) 
   const [taslak, setTaslak] = useState<Record<string, string>>({});
   const [tutar, setTutar] = useState(0);
   const [gonderiliyor, setGonderiliyor] = useState<string | null>(null);
+  const [menuAcik, setMenuAcik] = useState(false);
   const [yeniAd, setYeniAd] = useState("");
   const [yeniEposta, setYeniEposta] = useState("");
   const [yeniGrup, setYeniGrup] = useState<string>("genel");
@@ -98,9 +99,7 @@ export default function AidatHatirlatma({ talebeler }: { talebeler: Talebe[] }) 
       grupEtiket: `Genel · ${odeyen}/${talebeler.length} ödedi`,
       odeyen,
       toplam: talebeler.length,
-      odemeyenler: talebeler
-        .filter((t) => !t.aidat?.[ayKey])
-        .map((t) => t.isim),
+      odemeyenler: talebeler.filter((t) => !t.aidat?.[ayKey]).map((t) => t.isim),
       grupAdi: "",
     };
   };
@@ -224,53 +223,74 @@ export default function AidatHatirlatma({ talebeler }: { talebeler: Talebe[] }) 
     }
   };
 
+  const mailSil = async (anahtar: string, ad: string) => {
+    const yeni = { ...ayar.mailler, ...taslak, [anahtar]: "" };
+    setTaslak((t) => ({ ...t, [anahtar]: "" }));
+    try {
+      await hocaMailleriKaydet(yeni);
+      toast.success(`${ad} e-postası silindi.`);
+    } catch {
+      toast.error("E-posta silinemedi.");
+    }
+  };
+
+  const tumMailleriSil = async () => {
+    const bos: Record<string, string> = {};
+    GRUPLAR.forEach((g) => {
+      bos[g.id] = "";
+    });
+    setTaslak(bos);
+    try {
+      await hocaMailleriKaydet(bos);
+      toast.success("Tüm hoca e-postaları silindi.");
+    } catch {
+      toast.error("E-postalar silinemedi.");
+    }
+  };
+
   return (
     <div className="rounded-md border border-border/60 px-3 py-3">
-      <div className="mb-2 flex items-center gap-2">
-        <Mail className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium">Aidat Hatırlatma E-postası</span>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Mail className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">Aidat Hatırlatma E-postası</span>
+        </div>
+        <Button
+          size="icon"
+          variant="ghost"
+          aria-label="Hoca yönetimi menüsü"
+          onClick={() => setMenuAcik((v) => !v)}
+        >
+          {menuAcik ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+        </Button>
       </div>
-      <p className="mb-3 text-xs text-muted-foreground">
-        {ayEtiket} ayı için hocalara aidat hatırlatması gönderin. E-postalar
-        kalıcı olarak kaydedilir.
-        {gonderilmeyen.length > 0 && (
-          <span className="ml-1 font-medium text-destructive">
-            Bu ay {gonderilmeyen.length} hocaya henüz gönderilmedi.
-          </span>
-        )}
-      </p>
 
-      <div className="space-y-3">
-        {alicilar.map((a) => {
-          const gonderildi = gonderilenler.includes(a.anahtar);
-          return (
-            <div key={a.anahtar} className="rounded-md bg-muted/30 px-2 py-2">
-              <Label className="mb-1 flex items-center justify-between text-xs">
-                <span className="font-medium text-foreground">
-                  {a.ad}{" "}
-                  <span className="font-normal text-muted-foreground">
-                    · {a.grupEtiket}
-                  </span>
-                </span>
-                <span className="flex items-center gap-2">
-                  {gonderildi && (
-                    <span className="flex items-center gap-1 text-primary">
-                      <Check className="h-3 w-3" /> gönderildi
-                    </span>
-                  )}
-                  {a.ekstraId && (
+      {menuAcik ? (
+        <div className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Hoca e-postalarını buradan düzenleyin, silin veya yeni hoca ekleyin.
+          </p>
+
+          <div className="space-y-2">
+            {alicilar.map((a) => (
+              <div key={a.anahtar} className="rounded-md bg-muted/30 px-2 py-2">
+                <Label className="mb-1 flex items-center justify-between text-xs">
+                  <span className="font-medium text-foreground">{a.ad}</span>
+                  <span className="flex items-center gap-2">
                     <button
                       type="button"
-                      aria-label={`${a.ad} kaldır`}
+                      aria-label={`${a.ad} e-postasını sil`}
                       className="text-muted-foreground transition-colors hover:text-destructive"
-                      onClick={() => void hocaSil(a.ekstraId!, a.ad)}
+                      onClick={() =>
+                        a.ekstraId
+                          ? void hocaSil(a.ekstraId, a.ad)
+                          : void mailSil(a.anahtar, a.ad)
+                      }
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
-                  )}
-                </span>
-              </Label>
-              <div className="flex items-center gap-2">
+                  </span>
+                </Label>
                 <Input
                   type="email"
                   inputMode="email"
@@ -285,69 +305,117 @@ export default function AidatHatirlatma({ talebeler }: { talebeler: Talebe[] }) 
                     void hocaMailleriKaydet({ ...ayar.mailler, ...taslak })
                   }
                 />
-                <Button
-                  size="sm"
-                  disabled={gonderiliyor === a.anahtar}
-                  onClick={() => void gonder(a)}
-                >
-                  <Send className="mr-1 h-3.5 w-3.5" />
-                  {gonderiliyor === a.anahtar ? "..." : "Gönder"}
-                </Button>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            ))}
+          </div>
 
-      <Button
-        variant="outline"
-        className="mt-3 w-full"
-        disabled={!!gonderiliyor || gonderilmeyen.length === 0}
-        onClick={() => void hepsineGonder()}
-      >
-        <Mail className="mr-2 h-4 w-4" />
-        Tüm hocalara gönder ({gonderilmeyen.length})
-      </Button>
-
-      <div className="mt-4 rounded-md border border-dashed border-border/60 px-3 py-3">
-        <div className="mb-2 flex items-center gap-2">
-          <UserPlus className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">Yeni Hoca Ekle</span>
-        </div>
-        <div className="space-y-2">
-          <Input
-            placeholder="Hocanın adı"
-            className="h-9"
-            value={yeniAd}
-            onChange={(e) => setYeniAd(e.target.value)}
-          />
-          <Input
-            type="email"
-            inputMode="email"
-            placeholder="hoca@gmail.com"
-            className="h-9"
-            value={yeniEposta}
-            onChange={(e) => setYeniEposta(e.target.value)}
-          />
-          <Select value={yeniGrup} onValueChange={setYeniGrup}>
-            <SelectTrigger className="h-9">
-              <SelectValue placeholder="Grup seçin" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="genel">Genel (tüm kurs özeti)</SelectItem>
-              {GRUPLAR.map((g) => (
-                <SelectItem key={g.id} value={g.id}>
-                  {g.ad}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button variant="secondary" className="w-full" onClick={() => void hocaEkle()}>
-            <UserPlus className="mr-2 h-4 w-4" />
-            Hocayı kaydet
+          <Button
+            variant="outline"
+            className="w-full text-destructive"
+            onClick={() => void tumMailleriSil()}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Tüm hoca e-postalarını sil
           </Button>
+
+          <div className="rounded-md border border-dashed border-border/60 px-3 py-3">
+            <div className="mb-2 flex items-center gap-2">
+              <UserPlus className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Yeni Hoca Ekle</span>
+            </div>
+            <div className="space-y-2">
+              <Input
+                placeholder="Hocanın adı"
+                className="h-9"
+                value={yeniAd}
+                onChange={(e) => setYeniAd(e.target.value)}
+              />
+              <Input
+                type="email"
+                inputMode="email"
+                placeholder="hoca@gmail.com"
+                className="h-9"
+                value={yeniEposta}
+                onChange={(e) => setYeniEposta(e.target.value)}
+              />
+              <Select value={yeniGrup} onValueChange={setYeniGrup}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Grup seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="genel">Genel (tüm kurs özeti)</SelectItem>
+                  {GRUPLAR.map((g) => (
+                    <SelectItem key={g.id} value={g.id}>
+                      {g.ad}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => void hocaEkle()}
+              >
+                <UserPlus className="mr-2 h-4 w-4" />
+                Hocayı kaydet
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
+      ) : (
+        <>
+          <p className="mb-3 text-xs text-muted-foreground">
+            {ayEtiket} ayı hatırlatması.
+            {gonderilmeyen.length > 0 && (
+              <span className="ml-1 font-medium text-destructive">
+                {gonderilmeyen.length} hocaya henüz gönderilmedi.
+              </span>
+            )}
+          </p>
+
+          <div className="space-y-2">
+            {alicilar.map((a) => {
+              const gonderildi = gonderilenler.includes(a.anahtar);
+              return (
+                <div
+                  key={a.anahtar}
+                  className="flex items-center justify-between gap-2 rounded-md bg-muted/30 px-2 py-2"
+                >
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium">{a.ad}</div>
+                    <div className="truncate text-xs text-muted-foreground">
+                      {a.eposta.trim() || "e-posta yok"} · {a.grupEtiket}
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {gonderildi && (
+                      <Check className="h-4 w-4 text-primary" aria-label="gönderildi" />
+                    )}
+                    <Button
+                      size="sm"
+                      disabled={gonderiliyor === a.anahtar || !a.eposta.trim()}
+                      onClick={() => void gonder(a)}
+                    >
+                      <Send className="mr-1 h-3.5 w-3.5" />
+                      {gonderiliyor === a.anahtar ? "..." : "Gönder"}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <Button
+            variant="outline"
+            className="mt-3 w-full"
+            disabled={!!gonderiliyor || gonderilmeyen.length === 0}
+            onClick={() => void hepsineGonder()}
+          >
+            <Mail className="mr-2 h-4 w-4" />
+            Tüm hocalara gönder ({gonderilmeyen.length})
+          </Button>
+        </>
+      )}
     </div>
   );
 }
