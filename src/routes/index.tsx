@@ -1570,6 +1570,15 @@ function Index() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={mailAcik} onOpenChange={setMailAcik}>
+        <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Aidat Hatırlatma E-postası</DialogTitle>
+          </DialogHeader>
+          <AidatHatirlatma talebeler={talebeler} />
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={ayarlarAcik} onOpenChange={setAyarlarAcik}>
         <DialogContent className="flex h-dvh max-h-none w-full max-w-full flex-col gap-3 rounded-none border-0 p-4 sm:p-6">
           <DialogHeader className="shrink-0">
