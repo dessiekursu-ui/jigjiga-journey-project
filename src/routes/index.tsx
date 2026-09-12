@@ -75,6 +75,7 @@ import {
   Settings,
   Wallet,
   Users,
+  Mail,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -412,6 +413,7 @@ function Index() {
   const seciliDers: Ders = "kuran";
 
   const [ayarlarAcik, setAyarlarAcik] = useState(false);
+  const [mailAcik, setMailAcik] = useState(false);
   const [aidatIndirAy, setAidatIndirAy] = useState<string>("buAy");
   const [parolaDegistirAcik, setParolaDegistirAcik] = useState(false);
   const [eskiParola, setEskiParola] = useState("");
@@ -1054,6 +1056,10 @@ function Index() {
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuLabel>Yönetim</DropdownMenuLabel>
+                    <DropdownMenuItem onSelect={() => setMailAcik(true)}>
+                      <Mail className="mr-2 h-4 w-4" />
+                      Aidat Hatırlatma E-postası
+                    </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => setAyarlarAcik(true)}>
                       <Settings className="mr-2 h-4 w-4" />
                       {tr("ayarlar")}
@@ -1564,6 +1570,15 @@ function Index() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={mailAcik} onOpenChange={setMailAcik}>
+        <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Aidat Hatırlatma E-postası</DialogTitle>
+          </DialogHeader>
+          <AidatHatirlatma talebeler={talebeler} />
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={ayarlarAcik} onOpenChange={setAyarlarAcik}>
         <DialogContent className="flex h-dvh max-h-none w-full max-w-full flex-col gap-3 rounded-none border-0 p-4 sm:p-6">
           <DialogHeader className="shrink-0">
@@ -1702,8 +1717,6 @@ function Index() {
             </button>
             {hocaModu && (
               <>
-                <AidatHatirlatma talebeler={talebeler} />
-
                 <label className="flex w-full cursor-pointer items-center gap-3 rounded-md border border-border/60 px-3 py-2 text-left transition-colors hover:bg-accent">
                   <FileDown className="h-4 w-4 rotate-180 text-muted-foreground" />
                   <span className="text-sm font-medium">Talebe Listesi Excel Yükle</span>
